@@ -74,7 +74,6 @@ const readContractFile = async () => {
   });
 
   const headerFieldsInExcelFile = xlData[3];
-  console.log(headerFieldsInExcelFile)
   for (let i = 0; i < requiredExcelHeaders.length; i++) {
     if (
       headerFieldsInExcelFile[contractHeaderKeys[i]]?.trim() !=
@@ -243,7 +242,6 @@ const readCoffFile = async () => {
     x.amountToBeDelivered = parseFloat(x.amountToBeDelivered.toFixed(2));
     return x;
   });
-  console.log(updatedCoffData)
   return updatedCoffData;
 };
 

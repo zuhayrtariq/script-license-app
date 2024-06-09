@@ -33,6 +33,7 @@ const sesValidation = async ({ coffNo, sesEndDate }) => {
   for (let i = 0; i < data.length; i++) {
     await sesValidation(data[i]);
   }
+  console.log("Update SES End Date from Excel - Completed")
 };
 
 module.exports = updateSesFromExcel

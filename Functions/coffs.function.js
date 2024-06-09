@@ -80,5 +80,6 @@ const {  getCoff, updateCoff, addCoff } = require("../query");
                await coffValidation(data[i]);
           
         }
+        console.log("Update Call-off From Excel Completed!")
     }
     module.exports = updateCoffsFromExcel

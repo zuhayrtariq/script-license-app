@@ -47,17 +47,17 @@ const queryMutation = async (query) => {
 };
 
  const getContract = async (contractNo) => {
-  const query = `SELECT * FROM Contracts WHERE contractNo = ${contractNo}`;
+  const query = `SELECT * FROM Contract WHERE contractNo = ${contractNo}`;
   return await getQuerySingleResult(query);
 };
 
  const getCoff = async (coffNo) => {
-  const query = `SELECT * FROM Call_offs WHERE coffNo = ${coffNo}`;
+  const query = `SELECT * FROM Call_off WHERE coffNo = ${coffNo}`;
   return await getQuerySingleResult(query);
 };
 
  const getCoffSES = async (coffNo) => {
-  const query = `SELECT sesEndDate FROM Call_offs WHERE coffNo = ${coffNo}`;
+  const query = `SELECT sesEndDate FROM Call_off WHERE coffNo = ${coffNo}`;
   return await getQuerySingleResult(query);
 };
 
@@ -74,10 +74,10 @@ const queryMutation = async (query) => {
     contractCurrency,
     contractTRXValue,
   } = contractDetails;
-  const todayDate = await getTodayDate();
-  const query = `INSERT INTO Contracts (contractNo,sectionCode,title,vendorName,startDate,endDate
-        ,contractOpenValue,contractCurrency,contractTRXValue,addedOn,updatedOn) VALUES 
-        (${contractNo},'${sectionCode}','${title}','${vendorCode} - ${vendorName}','${startDate}','${endDate}'
+  const todayDate = new Date().toISOString();
+  const query = `INSERT INTO Contract (contractNo,sectionCode,title,vendorCode,vendorName,startDate,endDate
+        ,contractOpenValue,contractCurrency,contractTRXValue,createdAt,updatedAt) VALUES 
+        (${contractNo},'${sectionCode}','${title}','${vendorCode}','${vendorName}','${startDate}','${endDate}'
         ,${contractOpenValue},'${contractCurrency}',${contractTRXValue},'${todayDate}','${todayDate}') `;
 
   const result = await queryMutation(query);
@@ -96,9 +96,9 @@ const addCoff = async (coffDetails) => {
     amountToBeInvoiced,
     amountToBeDelivered,
   } = coffDetails;
-  const todayDate = await getTodayDate();
-  const query = `INSERT INTO call_offs (coffNo,contractNo,title,startDate,endDate,sesEndDate,coffAmount,
-    coffCurrency,amountToBeInvoiced,amountToBeDelivered,addedOn,updatedOn) VALUES 
+  const todayDate = new Date().toISOString();
+  const query = `INSERT INTO call_off (coffNo,contractNo,title,startDate,endDate,sesEndDate,coffAmount,
+    coffCurrency,amountToBeInvoiced,amountToBeDelivered,createdAt,updatedAt) VALUES 
         (${coffNo},'${contractNo}','${title}','${startDate}','${endDate}','${startDate}',
         ${coffAmount},'${coffCurrency}',${amountToBeInvoiced},${amountToBeDelivered},'${todayDate}','${todayDate}') `;
 
@@ -107,26 +107,26 @@ const addCoff = async (coffDetails) => {
 };
 
 const updateContract = async (updateData, contractNo) => {
-  const todayDate = await getTodayDate();
-  let query = 'UPDATE contracts SET ';
+  const todayDate = new Date().toISOString();
+  let query = 'UPDATE contract SET ';
   updateData.map((x, i) => {
     query += `${x.key} = '${x.value}' ,`;
   });
 
-  query += `updatedOn = '${todayDate}' WHERE contractNo = '${contractNo}'`;
+  query += `updatedAt = '${todayDate}' WHERE contractNo = '${contractNo}'`;
   const result = await queryMutation(query);
 
   return result;
 };
 
 const updateCoff = async (updateData, coffNo) => {
-  const todayDate = await getTodayDate();
-  let query = 'UPDATE call_offs SET ';
+  const todayDate = new Date().toISOString();
+  let query = 'UPDATE call_off SET ';
   updateData.map((x, i) => {
     query += `${x.key} = '${x.value}' ,`;
   });
 
-  query += `updatedOn = '${todayDate}' WHERE coffNo = '${coffNo}'`;
+  query += `updatedAt = '${todayDate}' WHERE coffNo = '${coffNo}'`;
   const result = await queryMutation(query);
 
   return result;
@@ -134,40 +134,40 @@ const updateCoff = async (updateData, coffNo) => {
 
 
 const getContractsExpiring = async(sectionCode) => {
-  console.log(process.env.Contract_Expiry_Limit_Months)
+  console.log("Contract Expiry Limit in Months : ",process.env.Contract_Expiry_Limit_Months)
   const expiryDate = getDateAfter(process.env.Contract_Expiry_Limit_Months,'days');
 
   if(sectionCode)
     {
-      const query = `SELECT * FROM CONTRACTS WHERE endDate = '${expiryDate}' AND emailAlerts = 1 AND archived = 0 AND sectionCode = '${sectionCode}' ORDER BY endDate `
+      const query = `SELECT * FROM CONTRACT WHERE endDate = '${expiryDate}' AND emailAlerts = 1 AND archived = 0 AND sectionCode = '${sectionCode}' ORDER BY endDate `
       return await getQueryResult(query)
     }
    else
       {
-        const query = `SELECT * FROM CONTRACTS WHERE endDate <= '${expiryDate}' AND emailAlerts = 1 AND archived = 0 ORDER BY sectionCode,endDate`
+        const query = `SELECT * FROM CONTRACT WHERE endDate <= '${expiryDate}' AND emailAlerts = 1 AND archived = 0 ORDER BY sectionCode,endDate`
         return await getQueryResult(query)
       }
 
 }
 
 const getCoffsExpiring = async(sectionCode) => {
-  console.log(process.env.Coff_Expiry_Limit_Days)
+  console.log("Coff Expiry Limit in Days : ",process.env.Coff_Expiry_Limit_Days)
   const expiryDate = getDateAfter(process.env.Coff_Expiry_Limit_Days,'days');
 
   if(sectionCode)
     {
-      const query = `SELECT call_offs.*,contracts.sectionCode,contracts.endDate as contractEndDate,contracts.vendorName,contracts.contractOpenValue,contracts.contractCurrency FROM call_offs
-      INNER JOIN Contracts on Contracts.contractNo = call_offs.contractNo
+      const query = `SELECT call_off.*,contract.sectionCode,contract.endDate as contractEndDate,contract.vendorName,contract.contractOpenValue,contract.contractCurrency FROM call_off
+      INNER JOIN Contract on Contract.contractNo = call_off.contractNo
     
-       WHERE call_offs.endDate = '${expiryDate}' AND call_offs.emailAlerts = 1 AND call_offs.archived = 0 AND sectionCode = '${sectionCode}' ORDER BY call_offs.endDate,call_offs.contractNo `
+       WHERE call_off.endDate = '${expiryDate}' AND call_off.emailAlerts = 1 AND call_off.archived = 0 AND sectionCode = '${sectionCode}' ORDER BY call_off.endDate,call_off.contractNo `
       return await getQueryResult(query)
     }
    else
       {
-        const query = `SELECT call_offs.*,contracts.sectionCode,contracts.endDate as contractEndDate,contracts.vendorName,contracts.contractOpenValue,contracts.contractCurrency FROM call_offs
-      INNER JOIN Contracts on Contracts.contractNo = call_offs.contractNo
+        const query = `SELECT call_off.*,contract.sectionCode,contract.endDate as contractEndDate,contract.vendorName,contract.contractOpenValue,contract.contractCurrency FROM call_off
+      INNER JOIN Contract on Contract.contractNo = call_off.contractNo
     
-       WHERE call_offs.endDate <= '${expiryDate}' AND call_offs.emailAlerts = 1 AND call_offs.archived = 0  ORDER BY sectionCode,call_offs.endDate,call_offs.contractNo `
+       WHERE call_off.endDate <= '${expiryDate}' AND call_off.emailAlerts = 1 AND call_off.archived = 0  ORDER BY sectionCode,call_off.endDate,call_off.contractNo `
       return await getQueryResult(query)
       }
 
@@ -177,22 +177,22 @@ const getCoffsExpiring = async(sectionCode) => {
 // 1 : on that date and before that date
 // 2 : only on that date
 const getSESExpiring = async(type = 1) => {
-  console.log(process.env.Ses_Expiry_Limit_Days)
+  console.log("SES Expiry Limit in Days : ",process.env.Ses_Expiry_Limit_Days)
   const expiryDate = getDateAfter(process.env.Ses_Expiry_Limit_Days,'days');
   if(type == 1)
     {
-      const query = `SELECT call_offs.*,contracts.sectionCode,contracts.vendorName FROM call_offs
-      INNER JOIN Contracts on Contracts.contractNo = call_offs.contractNo
+      const query = `SELECT call_off.*,contract.sectionCode,contract.vendorName FROM call_off
+      INNER JOIN Contract on Contract.contractNo = call_off.contractNo
     
-       WHERE call_offs.sesEndDate <= '${expiryDate}' AND call_offs.archived = 0 AND call_offs.endDate != call_offs.sesEndDate ORDER BY call_offs.sesEndDate`
+       WHERE call_off.sesEndDate <= '${expiryDate}' AND call_off.archived = 0 AND call_off.endDate != call_off.sesEndDate ORDER BY call_off.sesEndDate`
       return await getQueryResult(query)
     }
    else
       {
-        const query = `SELECT call_offs.*,contracts.sectionCode,contracts.vendorName FROM call_offs
-        INNER JOIN Contracts on Contracts.contractNo = call_offs.contractNo
+        const query = `SELECT call_off.*,contract.sectionCode,contract.vendorName FROM call_off
+        INNER JOIN Contract on Contract.contractNo = call_off.contractNo
       
-         WHERE call_offs.sesEndDate = '${expiryDate}' AND call_offs.archived = 0 AND call_offs.endDate != call_offs.sesEndDate ORDER BY call_offs.sesEndDate`
+         WHERE call_off.sesEndDate = '${expiryDate}' AND call_off.archived = 0 AND call_off.endDate != call_off.sesEndDate ORDER BY call_off.sesEndDate`
         return await getQueryResult(query)
       }
 

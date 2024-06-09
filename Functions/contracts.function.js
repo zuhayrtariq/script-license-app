@@ -72,5 +72,6 @@ const updateContractsFromExcel = async(data) =>{
            await contractValidation(data[i]);
       
     }
+    console.log("Update Contract From Excel Completed!")
 }
 module.exports = updateContractsFromExcel
